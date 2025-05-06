@@ -1,0 +1,72 @@
+import requests
+from requests_oauthlib import OAuth2Session
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QLabel, QLineEdit, QApplication, QWidget
+import sys
+
+# OAuth2-sessies voor Google en Facebook
+class SocialMediaIntegration(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.init_ui()
+
+    def init_ui(self):
+        layout = QVBoxLayout()
+        
+        self.label = QLabel("Inloggen via Sociale Media", self)
+        layout.addWidget(self.label)
+        
+        self.google_login_button = QPushButton("Inloggen met Google", self)
+        self.google_login_button.clicked.connect(self.google_login)
+        layout.addWidget(self.google_login_button)
+        
+        self.facebook_login_button = QPushButton("Inloggen met Facebook", self)
+        self.facebook_login_button.clicked.connect(self.facebook_login)
+        layout.addWidget(self.facebook_login_button)
+
+        self.setLayout(layout)
+
+    def google_login(self):
+        # Google OAuth2 login URL en client_id/client_secret instellen
+        google_client_id = 'your_google_client_id'
+        google_client_secret = 'your_google_client_secret'
+        authorization_base_url = 'https://accounts.google.com/o/oauth2/auth'
+        token_url = 'https://accounts.google.com/o/oauth2/token'
+        redirect_uri = 'http://localhost:8000/callback'
+
+        google = OAuth2Session(google_client_id, redirect_uri=redirect_uri)
+        authorization_url, state = google.authorization_url(authorization_base_url)
+        print(f'Volg deze URL om in te loggen: {authorization_url}')
+
+        # Na autorisatie, de gebruiker voert de URL in die ze hebben ontvangen
+        redirect_response = input('Plak hier de URL die je hebt ontvangen na inloggen: ')
+        google.fetch_token(token_url, authorization_response=redirect_response, client_secret=google_client_secret)
+
+        response = google.get('https://www.googleapis.com/oauth2/v1/userinfo')
+        user_info = response.json()
+        print(f'Welkom {user_info["name"]}, je bent ingelogd met Google.')
+
+    def facebook_login(self):
+        # Facebook OAuth2 login URL en client_id/client_secret instellen
+        facebook_client_id = 'your_facebook_client_id'
+        facebook_client_secret = 'your_facebook_client_secret'
+        authorization_base_url = 'https://www.facebook.com/v9.0/dialog/oauth'
+        token_url = 'https://graph.facebook.com/v9.0/oauth/access_token'
+        redirect_uri = 'http://localhost:8000/callback'
+
+        facebook = OAuth2Session(facebook_client_id, redirect_uri=redirect_uri)
+        authorization_url, state = facebook.authorization_url(authorization_base_url)
+        print(f'Volg deze URL om in te loggen: {authorization_url}')
+
+        # Na autorisatie, de gebruiker voert de URL in die ze hebben ontvangen
+        redirect_response = input('Plak hier de URL die je hebt ontvangen na inloggen: ')
+        facebook.fetch_token(token_url, authorization_response=redirect_response, client_secret=facebook_client_secret)
+
+        response = facebook.get('https://graph.facebook.com/me?fields=id,name,email')
+        user_info = response.json()
+        print(f'Welkom {user_info["name"]}, je bent ingelogd met Facebook.')
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    main_window = SocialMediaIntegration()
+    main_window.show()
+    sys.exit(app.exec_())
