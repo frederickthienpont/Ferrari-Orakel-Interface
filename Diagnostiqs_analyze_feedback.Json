@@ -1,0 +1,53 @@
+import random
+from PyQt5.QtWidgets import QVBoxLayout, QLabel, QPushButton, QGraphicsView, QWidget
+from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QPainter
+
+class DiagnosticFeedback(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.init_ui()
+        self.conversation_active = False
+
+    def init_ui(self):
+        layout = QVBoxLayout()
+
+        self.status_label = QLabel("Gesprek Status: Inactief", self)
+        layout.addWidget(self.status_label)
+
+        self.graph_view = QGraphicsView(self)
+        layout.addWidget(self.graph_view)
+
+        self.start_button = QPushButton("Start Diagnostische Analyse", self)
+        self.start_button.clicked.connect(self.start_analysis)
+        layout.addWidget(self.start_button)
+
+        self.setLayout(layout)
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_graph)
+
+    def start_analysis(self):
+        self.status_label.setText("Gesprek Status: Actief")
+        self.conversation_active = True
+        self.timer.start(1000)  # Verhoog de grafiek elke seconde
+
+    def stop_analysis(self):
+        self.status_label.setText("Gesprek Status: Inactief")
+        self.conversation_active = False
+        self.timer.stop()
+
+    def update_graph(self):
+        if self.conversation_active:
+            # Simuleer fluctuaties in gesprekskwaliteit
+            quality = random.randint(1, 100)  # Random voor demonstratie
+            color = Qt.green if quality > 70 else Qt.yellow if quality > 40 else Qt.red
+            self.graph_view.setBackgroundBrush(color)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = DiagnosticFeedback()
+    window.setWindowTitle("Diagnostische Feedback")
+    window.resize(400, 300)
+    window.show()
+    sys.exit(app.exec_())
