@@ -1,0 +1,164 @@
+import sys
+import datetime
+import random
+import webbrowser
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QLabel,
+    QPushButton, QTextEdit, QLineEdit, QHBoxLayout, QStackedWidget,
+    QGraphicsScene, QGraphicsView, QGraphicsEllipseItem
+)
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QPainter
+
+class LoginWidget(QWidget):
+    def __init__(self, stacked_widget):
+        super().__init__()
+        self.stacked_widget = stacked_widget
+        self.init_ui()
+
+    def init_ui(self):
+        layout = QVBoxLayout()
+
+        self.username_input = QLineEdit(self)
+        self.username_input.setPlaceholderText("Gebruikersnaam")
+        self.password_input = QLineEdit(self)
+        self.password_input.setEchoMode(QLineEdit.Password)
+        self.password_input.setPlaceholderText("Wachtwoord")
+
+        self.login_button = QPushButton("Inloggen")
+        self.login_button.clicked.connect(self.login)
+
+        layout.addWidget(QLabel("Welkom bij Ferrari DialoguX Ring Suite"))
+        layout.addWidget(self.username_input)
+        layout.addWidget(self.password_input)
+        layout.addWidget(self.login_button)
+
+        self.setLayout(layout)
+
+    def login(self):
+        username = self.username_input.text()
+        if username:
+            self.stacked_widget.setCurrentIndex(1)
+
+class DashboardWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.init_ui()
+
+    def init_ui(self):
+        layout = QVBoxLayout()
+
+        self.status_label = QLabel("Gesprek Status: Inactief")
+        self.log_output = QTextEdit()
+        self.log_output.setReadOnly(True)
+
+        self.start_button = QPushButton("Start Gespreksanalyse")
+        self.start_button.clicked.connect(self.start_analysis)
+
+        self.stop_button = QPushButton("Stop Gesprek")
+        self.stop_button.clicked.connect(self.stop_analysis)
+
+        self.graph_view = QGraphicsView(self)
+        self.scene = QGraphicsScene()
+        self.graph_view.setScene(self.scene)
+        self.graph_rect = self.scene.addRect(0, 0, 200, 20)
+
+        # Social Media Buttons
+        self.facebook_button = QPushButton("Deel op Facebook")
+        self.facebook_button.clicked.connect(lambda: self.open_link("https://www.facebook.com/sharer/sharer.php?u=https://ferrari-ring-suite.app"))
+
+        self.instagram_button = QPushButton("Open Instagram")
+        self.instagram_button.clicked.connect(lambda: self.open_link("https://www.instagram.com/"))
+
+        self.twitter_button = QPushButton("Deel op Twitter")
+        self.twitter_button.clicked.connect(lambda: self.open_link("https://twitter.com/intent/tweet?text=Ferrari+Ring+Suite+is+geweldig!"))
+
+        layout.addWidget(self.status_label)
+        layout.addWidget(self.log_output)
+        layout.addWidget(self.graph_view)
+        layout.addWidget(self.start_button)
+        layout.addWidget(self.stop_button)
+        layout.addWidget(self.facebook_button)
+        layout.addWidget(self.instagram_button)
+        layout.addWidget(self.twitter_button)
+
+        self.setLayout(layout)
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_graph)
+        self.conversation_active = False
+
+    def start_analysis(self):
+        self.status_label.setText("Gesprek Status: Actief")
+        self.log_output.append(f"[START] Analyse gestart op {datetime.datetime.now().strftime('%H:%M:%S')}")
+        self.conversation_active = True
+        self.timer.start(1000)
+
+    def stop_analysis(self):
+        self.status_label.setText("Gesprek Status: Inactief")
+        self.log_output.append(f"[STOP] Analyse gestopt op {datetime.datetime.now().strftime('%H:%M:%S')}")
+        self.conversation_active = False
+        self.timer.stop()
+
+    def update_graph(self):
+        if self.conversation_active:
+            quality = random.randint(1, 100)
+            color = Qt.green if quality > 70 else Qt.yellow if quality > 40 else Qt.red
+            self.graph_view.setBackgroundBrush(color)
+
+    def open_link(self, url):
+        webbrowser.open(url)
+
+class FerrariRingController(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.init_ui()
+
+    def init_ui(self):
+        layout = QVBoxLayout()
+
+        self.status_label = QLabel("Ring Controller: Wacht op actie", self)
+        layout.addWidget(self.status_label)
+
+        self.scene = QGraphicsScene()
+        self.view = QGraphicsView(self.scene)
+        self.view.setRenderHint(QPainter.Antialiasing)
+        self.view.setRenderHint(QPainter.SmoothPixmapTransform)
+        layout.addWidget(self.view)
+
+        self.ring = QGraphicsEllipseItem(0, 0, 100, 100)
+        self.ring.setBrush(Qt.red)
+        self.ring.setFlag(QGraphicsEllipseItem.ItemIsMovable)
+        self.scene.addItem(self.ring)
+
+        self.start_button = QPushButton("Start Gesprek", self)
+        self.start_button.clicked.connect(self.start_conversation)
+        layout.addWidget(self.start_button)
+
+        self.setLayout(layout)
+
+    def start_conversation(self):
+        self.status_label.setText("Gesprek gestart! Ring geactiveerd.")
+
+class FerrariRingApp(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Ferrari DialoguX Ring Suite")
+        self.resize(600, 400)
+
+        self.stacked_widget = QStackedWidget()
+        self.login_widget = LoginWidget(self.stacked_widget)
+        self.dashboard_widget = DashboardWidget()
+
+        self.stacked_widget.addWidget(self.login_widget)
+        self.stacked_widget.addWidget(self.dashboard_widget)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.stacked_widget)
+        self.setLayout(layout)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    main_window = FerrariRingApp()
+    main_window.show()
+    sys.exit(app.exec_())
